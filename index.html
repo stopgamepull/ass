@@ -1,0 +1,205 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Default Asset</title>
+    <link rel="icon" type="image/x-icon" href="images/DASSET.png">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3a86ff;
+            --secondary-color: #8338ec;
+            --text-color: #2b2d42;
+            --light-text: #8d99ae;
+            --bg-color: #f8f9fa;
+            --progress-bg: #e9ecef;
+            --progress-fill: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            --golden-ratio: 1.618;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text-color);
+            line-height: var(--golden-ratio);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: calc(2.5rem * var(--golden-ratio));
+            margin: 0;
+            font-weight: 600;
+            background: linear-gradient(90deg, #979797, #505050);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.2;
+        }
+        
+        .subtitle {
+            font-size: calc(1rem * var(--golden-ratio));
+            color: var(--light-text);
+            margin: 10px 0 40px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+        
+        .progress-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 40px auto;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--light-text);
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background-color: var(--progress-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--progress-fill);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+        
+        .market-cap {
+            font-size: 2rem;
+            margin-top: 30px;
+            font-weight: 500;
+        }
+        
+        .market-cap-label {
+            font-size: 1rem;
+            color: var(--light-text);
+            margin-top: 5px;
+        }
+        
+        .social-link {
+            color: var(--light-text);
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s;
+        }
+        
+        .social-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .social-container {
+            margin-top: 60px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Default Asset</h1>
+        <div class="subtitle">technically functional.</div>
+        
+        <div class="progress-container">
+            <div class="progress-info">
+                <span>0%</span>
+                <span>Bonding Curve</span>
+                <span>100%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="bondingCurve"></div>
+            </div>
+        </div>
+        
+        <div class="market-cap" id="marketCap">$0</div>
+        <div class="market-cap-label">Market Cap</div>
+        
+        <div class="social-container">
+            <a href="https://x.com/DefaultAsset" class="social-link">X</a>
+            <a href="https://letsbonk.fun/token/7SxEa3Z4XbFMsMCaS9169jyVee7hwPnbv1MystsAbonk" class="social-link">$DASSET</a>
+            <a href="#" class="social-link">DEX</a>
+        </div>
+    </div>
+
+    <script>
+        const tokenAddress = '7SxEa3Z4XbFMsMCaS9169jyVee7hwPnbv1MystsAbonk';
+        const apiKey = '9f6b2b12-f26b-493e-80ed-72ad03294122';
+        
+        // Bonding curve parameters
+        const MIN_MCAP = 1;    // $1
+        const MAX_MCAP = 65000; // $65,000
+
+        async function fetchTokenData() {
+            try {
+                // Fetch token data from SolanaTracker API
+                const response = await fetch(`https://data.solanatracker.io/tokens/${tokenAddress}`, {
+                    headers: { 'x-api-key': apiKey }
+                });
+                
+                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                
+                const data = await response.json();
+                
+                // Extract market cap from the first pool
+                let currentMcap = 0;
+                if (data.pools && data.pools.length > 0 && data.pools[0].marketCap?.usd) {
+                    currentMcap = data.pools[0].marketCap.usd;
+                }
+                
+                // Update market cap display
+                document.getElementById('marketCap').textContent = `$${Math.round(currentMcap).toLocaleString()}`;
+                
+                // Calculate bonding curve progress (0% to 100%)
+                let progress = (currentMcap - MIN_MCAP) / (MAX_MCAP - MIN_MCAP) * 100;
+                progress = Math.max(0, Math.min(100, progress)); // Clamp between 0-100
+                
+                // Update progress bar
+                document.getElementById('bondingCurve').style.width = `${progress}%`;
+                
+            } catch (error) {
+                console.error("Error fetching token data:", error);
+                document.getElementById('marketCap').textContent = 'soon';
+                document.getElementById('bondingCurve').style.width = '0%';
+                
+                // Retry after 5 seconds if there's an error
+                setTimeout(fetchTokenData, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchTokenData();
+            setInterval(fetchTokenData, 1000); // Update every 5 seconds
+        });
+    </script>
+
+</body></html>
